@@ -79,12 +79,12 @@ namespace Webserver
 
                                     string rawData = new String(Encoding.UTF8.GetChars(bytes));
                                     string[] parameters = rawData.Words();
-
-                                    //DebugUtils.Print(DebugLevel.INFO, "Parameter 1 of received request: " + parameters[0]);
-
+                                    
                                     string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n";
-
-                                    connection.Send(Encoding.UTF8.GetBytes(header), header.Length, SocketFlags.None);
+                                    string body = "Hello World!";
+                                    string data = header + body;
+                                    
+                                    connection.Send(Encoding.UTF8.GetBytes(data), data.Length, SocketFlags.None);
                                     
                                     //TODO: Event handler for incoming requests
                                 }
