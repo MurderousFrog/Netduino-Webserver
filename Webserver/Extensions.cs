@@ -4,7 +4,7 @@ using Microsoft.SPOT;
 namespace Webserver
 {
     public static class Extensions
-    {        
+    {
         /// <summary>
         /// returns # of "words", aka strings seperated by space or linebreaks
         /// </summary>
@@ -14,6 +14,5 @@ namespace Webserver
         {
             return str.Split(new char[] { ' ', '\n' });
         }
-
     } 
 }
