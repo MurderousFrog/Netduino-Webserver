@@ -14,5 +14,6 @@ namespace Webserver
         {
             return str.Split(new char[] { ' ', '\n' });
         }
+
     } 
 }
