@@ -5,6 +5,7 @@ using System.Threading;
 using System.Net.Sockets;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Net.NetworkInformation;
+using Webserver.Extensions;
 
 namespace Webserver
 {
@@ -63,7 +64,13 @@ namespace Webserver
                             if(connection.Poll(-1,SelectMode.SelectRead)){
                                 byte[] bytes = new byte[connection.Available];
                                 int count = connection.Receive(bytes);
-                                DebugUtils.Print(DebugLevel.INFO, "Request received from ", +connection.RemoteEndPoint.ToString() + " at " + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+                                DebugUtils.Print(DebugLevel.INFO, "Request received from " + connection.RemoteEndPoint.ToString() + " at " + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+                                connection.SendTimeout = this.timeout;
+
+                                string rawData = new String(Encoding.UTF8.GetChars(bytes));
+                                string[] parameters = rawData.Words();
+
+                                DebugUtils.Print(DebugLevel.INFO, "Parameter 1 of received request: " + parameters[0]);
                             }
                         }
                     }
