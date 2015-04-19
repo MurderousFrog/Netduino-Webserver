@@ -13,6 +13,10 @@ namespace Webserver
     {
         public static void Main()
         {
+            //setting the error reporting level
+            DebugUtils.debugLevel = DebugLevel.INFO;
+
+            DebugUtils.Print(DebugLevel.INFO, "Starting Webserver class");
             Webserver webserver = new Webserver();
         }
 
