@@ -142,7 +142,7 @@ namespace Webserver
         #region Private methods
         private void StartServer()
         {
-            DebugUtils.Print(DebugLevel.INFO, "Starting HTTP Webserver in thread " + httpServerThread.GetHashCode().ToString());
+            DebugUtils.Print(DebugLevel.INFO, "Starting HTTP Webserver in thread " + httpServerThread.GetHashCode());
             try
             {
                 using (Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
@@ -190,7 +190,7 @@ namespace Webserver
             catch (Exception e)
             {
                 DebugUtils.Print(DebugLevel.ERROR, "An exception occured while accepting client socket connections.");
-                DebugUtils.Print(DebugLevel.ERROR, e.ToString());
+                DebugUtils.Print(DebugLevel.ERROR, e.StackTrace);
             }
         }
 
@@ -201,14 +201,21 @@ namespace Webserver
         /// <param name="e"></param>
         private static void ProcessClientRequest(object obj, HTTPServer.WebServerEventArgs e)
         {
+
             //DebugUtils.Print(DebugLevel.INFO, "Received a request in ProcessClientRequest method:");
-            //DebugUtils.Print(DebugLevel.INFO, e.rawData);
+            //do not use this, emtpy (null) requests will cause HTTPHeader.Parse to return null, ToString() on null object will cause a null reference exception
+            //DebugUtils.Print(DebugLevel.INFO, HTTPHeader.Parse(e.rawData).ToString());
 
-            string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n";
+            HTTPRequest request = HTTPRequest.Parse(e.rawData);
+
+            HTTPHeader header = new HTTPHeader();
+            header.Add("Content-Type", "text/html; charset=utf-8");
+            header.Add("Connection", "close");
+           
             string body = "Hello World!";
-            string data = header + body;
+            string data = "HTTP/1.1 200 OK\r\n" + header.ToString() + body;
 
-            e.response.Send(Encoding.UTF8.GetBytes(data), data.Length, SocketFlags.None);
+            OutPutStream(e.response, data);
             
         }
         private static string OutPutStream(Socket response, string strResponse)
