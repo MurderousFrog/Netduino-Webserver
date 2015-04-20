@@ -17,41 +17,49 @@ namespace Webserver
         public static DebugLevel debugLevel = DebugLevel.INFO;
         public static void Print(DebugLevel lvl, String message)
         {
-            switch (lvl)
+            string[] lines = message.Split(new char[] { '\n' });
+            string print = null;
+            foreach (string line in lines)
             {
-                case DebugLevel.INFO:
-                    message = "INFO:\t\t" + message;
-                    break;
-                case DebugLevel.WARNING:
-                    message = "WARNING:\t" + message;
-                    break;
-                case DebugLevel.ERROR:
-                    message = "ERROR:\t\t" + message;
-                    break;
-                default:
-                    break;
-            }
+                string mLine = line.Replace("\n","").Replace("\r", "");
 
-            switch (debugLevel)
-            {
-                case DebugLevel.INFO:
-                    Debug.Print(message);
-                    break;
-                case DebugLevel.WARNING:
-                    if (lvl == DebugLevel.ERROR || lvl == DebugLevel.WARNING)
-                    {
-                        Debug.Print(message);
-                    }
-                    break;
-                case DebugLevel.ERROR:
-                    if (lvl == DebugLevel.ERROR)
-                    {
-                        Debug.Print(message);
-                    }
-                    break;
-                default:
-                    break;
+                switch (lvl)
+                {
+                    case DebugLevel.INFO:
+                        print = "INFO:\t\t" + mLine;
+                        break;
+                    case DebugLevel.WARNING:
+                        print = "WARNING:\t" + mLine;
+                        break;
+                    case DebugLevel.ERROR:
+                        print = "ERROR:\t\t" + mLine;
+                        break;
+                    default:
+                        break;
+                }
+
+                switch (debugLevel)
+                {
+                    case DebugLevel.INFO:
+                        Debug.Print(print);
+                        break;
+                    case DebugLevel.WARNING:
+                        if (lvl == DebugLevel.ERROR || lvl == DebugLevel.WARNING)
+                        {
+                            Debug.Print(print);
+                        }
+                        break;
+                    case DebugLevel.ERROR:
+                        if (lvl == DebugLevel.ERROR)
+                        {
+                            Debug.Print(print);
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
+            
         }
     }
 }
