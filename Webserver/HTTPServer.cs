@@ -85,22 +85,12 @@ namespace Webserver
         /// CommandReceived event is triggered when a valid command (plus parameters) is received.
         /// Valid commands are defined in the AllowedCommands property.
         /// </summary>
-        public event GetRequestHandler CommandReceived;
+        public event GetRequestHandler RequestReceived;
 
         #endregion
 
-        #region Public and private methods
 
-        /// <summary>
-        /// Method is called when a new client request is received
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="e"></param>
-        private static void ProcessClientRequest(object obj, HTTPServer.WebServerEventArgs e)
-        {
-            DebugUtils.Print(DebugLevel.INFO, "Received a request in ProcessClientGetRequest method:" + e.rawData);
-            
-        }
+        #region Public methods
         /// <summary>
         /// Starts the http server thread
         /// </summary>
@@ -108,7 +98,7 @@ namespace Webserver
         {
             running = true;
             httpServerThread = new Thread(StartServer);
-            CommandReceived += new GetRequestHandler(ProcessClientRequest);
+            RequestReceived += new GetRequestHandler(ProcessClientRequest);
             try
             {
                 stop = false;
@@ -121,61 +111,8 @@ namespace Webserver
                 running = false;
             }
         }
-        private void StartServer()
-        {
-            DebugUtils.Print(DebugLevel.INFO, "Starting HTTP Webserver in thread " + httpServerThread.GetHashCode().ToString());
-            try
-            {
-                using (Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
-                {
-                    server.ReceiveTimeout = timeout;
-                    server.Bind(serverEndpoint);
-                    server.Listen(backlog);
-
-                    while (!stop)
-                    {
-                        try
-                        {
-                            using (Socket connection = server.Accept())
-                            {
-                                if (connection.Poll(-1, SelectMode.SelectRead))
-                                {
-                                    byte[] bytes = new byte[connection.Available];
-                                    int count = connection.Receive(bytes);
-                                    DebugUtils.Print(DebugLevel.INFO, "Request received from " + connection.RemoteEndPoint.ToString() + " at " + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-                                    connection.SendTimeout = this.timeout;
-
-                                    string rawData = new String(Encoding.UTF8.GetChars(bytes));
-                                    //string[] parameters = rawData.Words();
-
-                                    string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n";
-                                    string body = "Hello World!";
-                                    string data = header + body;
-
-                                    connection.Send(Encoding.UTF8.GetBytes(data), data.Length, SocketFlags.None);
-
-                                    if (CommandReceived != null)
-                                    {
-                                        CommandReceived(this, new WebServerEventArgs(connection, rawData));
-                                    }
-                                }
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            DebugUtils.Print(DebugLevel.ERROR, "An exception occured while accepting client socket connections.");
-                            DebugUtils.Print(DebugLevel.ERROR, e.ToString());
-                        }
-                    }
-
-                }
-
-            }
-            catch (Exception e)
-            {
-                DebugUtils.Print(DebugLevel.ERROR, "An exception occured while trying to initialize listener socket.");
-                DebugUtils.Print(DebugLevel.ERROR, e.ToString());
-            }
+        public bool IsRunning(){
+            return running;
         }
         /// <summary>
         /// Restarts the HTTP Server
@@ -200,6 +137,84 @@ namespace Webserver
             Dispose(true);
             GC.SuppressFinalize(this);
         }
+        #endregion
+
+        #region Private methods
+        private void StartServer()
+        {
+            DebugUtils.Print(DebugLevel.INFO, "Starting HTTP Webserver in thread " + httpServerThread.GetHashCode().ToString());
+            try
+            {
+                using (Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+                {
+                    server.ReceiveTimeout = timeout;
+                    server.Bind(serverEndpoint);
+                    server.Listen(backlog);
+
+                    while (!stop)
+                    {
+                        AcceptIncomingRequest(server);
+                        
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                DebugUtils.Print(DebugLevel.ERROR, "An exception occured while trying to initialize listener socket.");
+                DebugUtils.Print(DebugLevel.ERROR, e.ToString());
+            }
+        }
+        private void AcceptIncomingRequest(Socket server)
+        {
+            try
+            {
+                using (Socket connection = server.Accept())
+                {
+                    if (connection.Poll(-1, SelectMode.SelectRead))
+                    {
+                        byte[] bytes = new byte[connection.Available];
+                        int count = connection.Receive(bytes);
+
+                        DebugUtils.Print(DebugLevel.INFO, DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + " Request received from " + connection.RemoteEndPoint.ToString());
+                        connection.SendTimeout = timeout;
+
+                        string rawData = new String(Encoding.UTF8.GetChars(bytes));
+
+                        //make sure something is attached to the CommandReceived Event
+                        if (RequestReceived != null)
+                        {
+                            RequestReceived(this, new WebServerEventArgs(connection, rawData));
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                DebugUtils.Print(DebugLevel.ERROR, "An exception occured while accepting client socket connections.");
+                DebugUtils.Print(DebugLevel.ERROR, e.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Method is called when a new client request is received, should not be called by user!
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="e"></param>
+        private static void ProcessClientRequest(object obj, HTTPServer.WebServerEventArgs e)
+        {
+            //DebugUtils.Print(DebugLevel.INFO, "Received a request in ProcessClientRequest method:");
+            //DebugUtils.Print(DebugLevel.INFO, e.rawData);
+
+            string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n";
+            string body = "Hello World!";
+            string data = header + body;
+
+            e.response.Send(Encoding.UTF8.GetBytes(data), data.Length, SocketFlags.None);
+            
+        }
+        
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)
