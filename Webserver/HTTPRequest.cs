@@ -14,22 +14,63 @@ namespace Webserver
         {
             GET, HEAD, POST, PUT, DELETE, TRACE, CONNECT
         }
-
+        private Type type;
+        private string url;
         private HTTPHeader header;
         private string body;
 
-        /// <summary>
-        /// Converts raw http request data into usable HTTPRequest form
-        /// </summary>
-        /// <param name="rawData">Raw HTTP request data</param>
-        public HTTPRequest(string rawData)
-        {
-            string[] lines = rawData.Split(new char[] { '\n' });
-        }
+
         public HTTPRequest(Type type, HTTPHeader header, string body)
         {
+            this.type = type;
             this.header = header;
             this.body = body;
+        }
+
+        /// <summary>
+        /// Parse raw http request data into usable HTTPRequest form
+        /// </summary>
+        /// <param name="rawData">Raw HTTP request data</param>
+        public static HTTPRequest Parse(string rawData)
+        {
+            //split raw data into lines
+            string[] lines = rawData.Split(new char[] { '\n' });
+
+            foreach (string line in lines)
+            {
+                //remove line breaks and carriage returns
+                string mLine = line.Replace("\n", "").Replace("\r", "");
+            }
+            
+            //take first line, split at all spaces, first string should be method
+            string method = lines[0].Split(new char[] { ' ' })[0];
+            //choose corelating method
+            Type extractedType; 
+            switch (method)
+            {
+                case "GET":
+
+                 break;
+                case "HEAD":
+                 break;
+                case "POST":
+                 break;
+                case "PUT":
+                 break;
+                case "DELETE":
+                 break;
+                case "TRACE":
+                 break;
+                case "CONNECT":
+                 break;
+                default:
+                 break;
+            }
+            //take first line, split at all spaces, second string should be URL.
+            string url = lines[0].Split(new char[] { ' ' })[1];
+
+
+            return new HTTPRequest();
 
         }
         public string ToString()
