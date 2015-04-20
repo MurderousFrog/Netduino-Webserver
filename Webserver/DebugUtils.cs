@@ -23,6 +23,11 @@ namespace Webserver
             {
                 string mLine = line.Replace("\n","").Replace("\r", "");
 
+                //print no empty lines
+                if (mLine == null)
+                {
+                    continue;
+                }
                 switch (lvl)
                 {
                     case DebugLevel.INFO:
