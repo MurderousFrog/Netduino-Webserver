@@ -20,9 +20,10 @@ namespace Webserver
         private string body;
 
 
-        public HTTPRequest(Type type, HTTPHeader header, string body)
+        public HTTPRequest(Type type, string url, HTTPHeader header, string body)
         {
             this.type = type;
+            this.url = url;
             this.header = header;
             this.body = body;
         }
@@ -33,54 +34,93 @@ namespace Webserver
         /// <param name="rawData">Raw HTTP request data</param>
         public static HTTPRequest Parse(string rawData)
         {
+            HTTPHeader header = HTTPHeader.Parse(rawData);
             //split raw data into lines
             string[] lines = rawData.Split(new char[] { '\n' });
 
-            foreach (string line in lines)
+            for (int i = 0; i < lines.Length; i++)
             {
                 //remove line breaks and carriage returns
-                string mLine = line.Replace("\n", "").Replace("\r", "");
+                lines[i] = lines[i].Replace("\n", "").Replace("\r", "");
             }
-            
+
             //take first line, split at all spaces, first string should be method
-            string method = lines[0].Split(new char[] { ' ' })[0];
+            string method = lines[0].Words()[0];
             //choose corelating method
-            Type extractedType; 
+            Type extractedType = Type.DELETE;
             switch (method)
             {
                 case "GET":
-
-                 break;
+                    extractedType = Type.GET;
+                    break;
                 case "HEAD":
-                 break;
+                    extractedType = Type.HEAD;
+                    break;
                 case "POST":
-                 break;
+                    extractedType = Type.POST;
+                    break;
                 case "PUT":
-                 break;
+                    extractedType = Type.PUT;
+                    break;
                 case "DELETE":
-                 break;
+                    extractedType = Type.DELETE;
+                    break;
                 case "TRACE":
-                 break;
+                    extractedType = Type.TRACE;
+                    break;
                 case "CONNECT":
-                 break;
+                    extractedType = Type.CONNECT;
+                    break;
                 default:
-                 break;
+                    break;
             }
             //take first line, split at all spaces, second string should be URL.
-            string url = lines[0].Split(new char[] { ' ' })[1];
+            string url = lines[0].Words()[1];
+            //http version is everything after HTTP/
+            string version = lines[0].Substring(lines[0].IndexOf("HTTP/") + 5);
+            string body = rawData.Substring(rawData.IndexOf("\r\n\r\n") + 4);
 
-
-            return new HTTPRequest();
+            return new HTTPRequest(extractedType,url,header,body);
 
         }
-        public string ToString()
+        public override string ToString()
         {
+            string httpType;
+            switch (type)
+            {
+                case Type.GET:
+                    httpType = "GET";
+                    break;
+                case Type.HEAD:
+                    httpType ="HEAD";
+                    break;
+                case Type.POST:
+                    httpType = "POST";
+                    break;
+                case Type.PUT:
+                    httpType ="PUT";
+                    break;
+                case Type.DELETE:
+                    httpType = "DELETE";
+                    break;
+                case Type.TRACE:
+                    httpType = "TRACE";
+                    break;
+                case Type.CONNECT:
+                    httpType = "CONNECT";
+                    break;
+                default:
+                    break;
+            }
+            //TODO:
             return header.ToString() + body.ToString();
         }
-        public byte[] GetHeaderAsBytes(){
+        public byte[] GetHeaderAsBytes()
+        {
             return Encoding.UTF8.GetBytes(header.ToString());
         }
-        public byte[] GetBodyAsByte(){
+        public byte[] GetBodyAsByte()
+        {
             return Encoding.UTF8.GetBytes(body);
         }
     }
