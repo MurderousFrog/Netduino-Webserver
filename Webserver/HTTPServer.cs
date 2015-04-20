@@ -8,8 +8,11 @@ using Microsoft.SPOT.Net.NetworkInformation;
 
 namespace Webserver
 {
+     
     class HTTPServer
     {
+        #region Variables
+
         private int port;
         private int timeout;
         private bool dhcp;
@@ -18,8 +21,14 @@ namespace Webserver
         private IPAddress gateway;
         private IPEndPoint serverEndpoint;
         private bool stop;
+        private bool running;
         private int backlog;
 
+        private Thread httpServerThread = null;
+
+        #endregion
+
+        #region Constructor
         /// <summary>
         /// HTTP Server for Web service requests
         /// </summary>
@@ -51,12 +60,70 @@ namespace Webserver
                 serverEndpoint = new IPEndPoint(this.ipAddress, this.port);
             }
         }
+        #endregion
+
+        #region Events
+
         /// <summary>
-        /// Starts the http server
+        /// Delegate for the CommandReceived event.
+        /// </summary>
+        public delegate void GetRequestHandler(object obj, WebServerEventArgs e);
+        public class WebServerEventArgs : EventArgs
+        {
+            public WebServerEventArgs(Socket response, string rawData)
+            {
+                this.response = response;
+                this.rawData = rawData;
+            }
+            public Socket response { get; protected set; }
+            public string rawData { get; protected set; }
+
+        }
+
+
+        /// <summary>
+        /// CommandReceived event is triggered when a valid command (plus parameters) is received.
+        /// Valid commands are defined in the AllowedCommands property.
+        /// </summary>
+        public event GetRequestHandler CommandReceived;
+
+        #endregion
+
+        #region Public and private methods
+
+        /// <summary>
+        /// Method is called when a new client request is received
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="e"></param>
+        private static void ProcessClientRequest(object obj, HTTPServer.WebServerEventArgs e)
+        {
+            DebugUtils.Print(DebugLevel.INFO, "Received a request in ProcessClientGetRequest method:" + e.rawData);
+            
+        }
+        /// <summary>
+        /// Starts the http server thread
         /// </summary>
         public void Start()
         {
-            stop = false;
+            running = true;
+            httpServerThread = new Thread(StartServer);
+            CommandReceived += new GetRequestHandler(ProcessClientRequest);
+            try
+            {
+                stop = false;
+                httpServerThread.Start();
+            }
+            catch (Exception)
+            {
+                DebugUtils.Print(DebugLevel.ERROR, "Starting HTTP Server Thread failed.");
+                stop = true;
+                running = false;
+            }
+        }
+        private void StartServer()
+        {
+            DebugUtils.Print(DebugLevel.INFO, "Starting HTTP Webserver in thread " + httpServerThread.GetHashCode().ToString());
             try
             {
                 using (Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
@@ -71,26 +138,31 @@ namespace Webserver
                         {
                             using (Socket connection = server.Accept())
                             {
-                                if(connection.Poll(-1,SelectMode.SelectRead)){
+                                if (connection.Poll(-1, SelectMode.SelectRead))
+                                {
                                     byte[] bytes = new byte[connection.Available];
                                     int count = connection.Receive(bytes);
                                     DebugUtils.Print(DebugLevel.INFO, "Request received from " + connection.RemoteEndPoint.ToString() + " at " + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
                                     connection.SendTimeout = this.timeout;
 
                                     string rawData = new String(Encoding.UTF8.GetChars(bytes));
-                                    string[] parameters = rawData.Words();
-                                    
+                                    //string[] parameters = rawData.Words();
+
                                     string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n";
                                     string body = "Hello World!";
                                     string data = header + body;
-                                    
+
                                     connection.Send(Encoding.UTF8.GetBytes(data), data.Length, SocketFlags.None);
-                                    
-                                    //TODO: Event handler for incoming requests
+
+                                    if (CommandReceived != null)
+                                    {
+                                        CommandReceived(this, new WebServerEventArgs(connection, rawData));
+                                    }
                                 }
                             }
                         }
-                        catch (Exception e){
+                        catch (Exception e)
+                        {
                             DebugUtils.Print(DebugLevel.ERROR, "An exception occured while accepting client socket connections.");
                             DebugUtils.Print(DebugLevel.ERROR, e.ToString());
                         }
@@ -106,11 +178,35 @@ namespace Webserver
             }
         }
         /// <summary>
+        /// Restarts the HTTP Server
+        /// </summary>
+        public void Restart()
+        {
+            Stop();
+            Start();
+        }
+        /// <summary>
         /// stops the http server
         /// </summary>
         public void Stop()
         {
             stop = true;
+            Thread.Sleep(100);
+            httpServerThread.Suspend();
+            DebugUtils.Print(DebugLevel.WARNING, "Stopped HTTP server in thread: ");
         }
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                httpServerThread = null;
+            }
+        }
+        #endregion
     }
 }
