@@ -18,15 +18,29 @@ namespace Webserver
         private HTTPHeader header;
         private string body;
 
+        /// <summary>
+        /// Converts raw http request data into usable HTTPRequest form
+        /// </summary>
+        /// <param name="rawData">Raw HTTP request data</param>
+        public HTTPRequest(string rawData)
+        {
+            string[] lines = rawData.Split(new char[] { '\n' });
+        }
         public HTTPRequest(Type type, HTTPHeader header, string body)
         {
-            //for httpheader class?
-            //if (httpVersion == null) { httpVersion = ""; }
-            //if (url == null) { url = ""; }
-            //if (contentType == null) { contentType = ""; }
-            //if (connection == null) { connection = ""; }
-            //if (httpBody == null) { httpBody = ""; }
+            this.header = header;
+            this.body = body;
 
+        }
+        public string ToString()
+        {
+            return header.ToString() + body.ToString();
+        }
+        public byte[] GetHeaderAsBytes(){
+            return Encoding.UTF8.GetBytes(header.ToString());
+        }
+        public byte[] GetBodyAsByte(){
+            return Encoding.UTF8.GetBytes(body);
         }
     }
 }
