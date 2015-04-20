@@ -16,7 +16,7 @@ namespace Webserver
         #region Private Methods
         private void StartHTTPServer()
         {
-            HTTPServer httpServer = new HTTPServer(80, 10000, 1000, false, IPAddress.Parse("192.168.0.144"), IPAddress.Parse("255.255.255.0"), IPAddress.Parse("192.168.0.106"));
+            HTTPServer httpServer = new HTTPServer(80, 10000, 1000, false, IPAddress.Parse("192.168.0.144"), IPAddress.Parse("255.255.255.0"), IPAddress.Parse("192.168.0.254"));
             httpServer.Start();
         }
         #endregion
