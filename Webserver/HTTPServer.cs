@@ -153,12 +153,9 @@ namespace Webserver
 
                     while (!stop)
                     {
-                        AcceptIncomingRequest(server);
-                        
+                        AcceptIncomingRequest(server);                        
                     }
-
                 }
-
             }
             catch (Exception e)
             {
