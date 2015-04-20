@@ -211,6 +211,14 @@ namespace Webserver
             e.response.Send(Encoding.UTF8.GetBytes(data), data.Length, SocketFlags.None);
             
         }
+        private static string OutPutStream(Socket response, string strResponse)
+        {
+            byte[] messageBody = Encoding.UTF8.GetBytes(strResponse);
+            response.Send(messageBody, 0, messageBody.Length, SocketFlags.None);
+            //allow time to physically send the bits
+            Thread.Sleep(10);
+            return "";
+        }
         
         protected virtual void Dispose(bool disposing)
         {
