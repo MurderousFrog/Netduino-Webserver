@@ -180,7 +180,7 @@ namespace Webserver
                         string rawData = new String(Encoding.UTF8.GetChars(bytes));
 
                         //make sure something is attached to the CommandReceived Event
-                        if (RequestReceived != null)
+                        if (RequestReceived != null && rawData != null)
                         {
                             RequestReceived(this, new WebServerEventArgs(connection, rawData));
                         }
@@ -207,6 +207,7 @@ namespace Webserver
             //DebugUtils.Print(DebugLevel.INFO, HTTPHeader.Parse(e.rawData).ToString());
 
             HTTPRequest request = HTTPRequest.Parse(e.rawData);
+            DebugUtils.Print(DebugLevel.INFO, request.ToString());
 
             HTTPHeader header = new HTTPHeader();
             header.Add("Content-Type", "text/html; charset=utf-8");
@@ -218,13 +219,19 @@ namespace Webserver
             OutPutStream(e.response, data);
             
         }
-        private static string OutPutStream(Socket response, string strResponse)
+        private static void OutPutStream(Socket response, string strResponse)
         {
-            byte[] messageBody = Encoding.UTF8.GetBytes(strResponse);
-            response.Send(messageBody, 0, messageBody.Length, SocketFlags.None);
-            //allow time to physically send the bits
-            Thread.Sleep(10);
-            return "";
+            try
+            {
+                byte[] messageBody = Encoding.UTF8.GetBytes(strResponse);
+                response.Send(messageBody, 0, messageBody.Length, SocketFlags.None);
+                //allow time to physically send the bits
+                Thread.Sleep(10);
+            }
+            catch (Exception)
+            {
+                //implement
+            }
         }
         
         protected virtual void Dispose(bool disposing)

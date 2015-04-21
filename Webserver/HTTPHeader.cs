@@ -18,6 +18,7 @@ namespace Webserver
         {
             list = new ArrayList();
         }
+
         /// <summary>
         /// Add a header field to the HTTP Header
         /// </summary>
@@ -27,6 +28,7 @@ namespace Webserver
             Pair p = new Pair(header, value);
             list.Add(p);
         }
+
         /// <summary>
         /// Remove a header from list
         /// </summary>
@@ -55,11 +57,11 @@ namespace Webserver
 
                 for (int i = 0; i < lines.Length; i++)
                 {
-                    //Remove line breaks and carriage returns
-                    lines[i] = lines[i].Replace("\n", "").Replace("\r", "");
 
                     if (lines[i] != null && lines[i].IndexOf(':') > -1)
                     {
+                        //Remove line breaks and carriage returns
+                        lines[i] = lines[i].Replace("\n", "").Replace("\r", "");
                         //Split at all ':', first substring is the header name
                         string headerName = lines[i].Split(new char[] { ':' })[0];
                         //Substring after ':' is headerValue

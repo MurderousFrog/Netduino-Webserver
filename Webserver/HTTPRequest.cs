@@ -16,14 +16,16 @@ namespace Webserver
         }
         private Type type;
         private string url;
+        private string version;
         private HTTPHeader header;
         private string body;
 
 
-        public HTTPRequest(Type type, string url, HTTPHeader header, string body)
+        public HTTPRequest(Type type, string url, string version, HTTPHeader header, string body)
         {
             this.type = type;
             this.url = url;
+            this.version = version;
             this.header = header;
             this.body = body;
         }
@@ -34,71 +36,76 @@ namespace Webserver
         /// <param name="rawData">Raw HTTP request data</param>
         public static HTTPRequest Parse(string rawData)
         {
-            HTTPHeader header = HTTPHeader.Parse(rawData);
-            //split raw data into lines
-            string[] lines = rawData.Split(new char[] { '\n' });
-
-            for (int i = 0; i < lines.Length; i++)
+            if (rawData != null)
             {
-                //remove line breaks and carriage returns
-                lines[i] = lines[i].Replace("\n", "").Replace("\r", "");
-            }
+                HTTPHeader header = HTTPHeader.Parse(rawData);
+                //split raw data into lines
+                string[] lines = rawData.Split(new char[] { '\n' });
 
-            //take first line, split at all spaces, first string should be method
-            string method = lines[0].Words()[0];
-            //choose corelating method
-            Type extractedType = Type.DELETE;
-            switch (method)
-            {
-                case "GET":
-                    extractedType = Type.GET;
-                    break;
-                case "HEAD":
-                    extractedType = Type.HEAD;
-                    break;
-                case "POST":
-                    extractedType = Type.POST;
-                    break;
-                case "PUT":
-                    extractedType = Type.PUT;
-                    break;
-                case "DELETE":
-                    extractedType = Type.DELETE;
-                    break;
-                case "TRACE":
-                    extractedType = Type.TRACE;
-                    break;
-                case "CONNECT":
-                    extractedType = Type.CONNECT;
-                    break;
-                default:
-                    break;
-            }
-            //take first line, split at all spaces, second string should be URL.
-            string url = lines[0].Words()[1];
-            //http version is everything after HTTP/
-            string version = lines[0].Substring(lines[0].IndexOf("HTTP/") + 5);
-            string body = rawData.Substring(rawData.IndexOf("\r\n\r\n") + 4);
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    //remove line breaks and carriage returns
+                    lines[i] = lines[i].Replace("\n", "").Replace("\r", "");
+                }
 
-            return new HTTPRequest(extractedType,url,header,body);
+                //take first line, split at all spaces, first string should be method
+                string method = lines[0].Words()[0];
+                //choose corelating method
+                Type extractedType = Type.DELETE;
+                switch (method)
+                {
+                    case "GET":
+                        extractedType = Type.GET;
+                        break;
+                    case "HEAD":
+                        extractedType = Type.HEAD;
+                        break;
+                    case "POST":
+                        extractedType = Type.POST;
+                        break;
+                    case "PUT":
+                        extractedType = Type.PUT;
+                        break;
+                    case "DELETE":
+                        extractedType = Type.DELETE;
+                        break;
+                    case "TRACE":
+                        extractedType = Type.TRACE;
+                        break;
+                    case "CONNECT":
+                        extractedType = Type.CONNECT;
+                        break;
+                    default:
+                        break;
+                }
+                //take first line, split at all spaces, second string should be URL.
+                string url = lines[0].Words()[1];
+                //http version is everything after HTTP/
+                string version = lines[0].Substring(lines[0].IndexOf("HTTP/") + 5);
+                string body = rawData.Substring(rawData.IndexOf("\r\n\r\n") + 4);
+                return new HTTPRequest(extractedType, url, version, header, body);
+            }
+            return null;
+
 
         }
         public override string ToString()
         {
-            string httpType;
+            StringBuilder request = new StringBuilder();
+            string httpType = "";
             switch (type)
             {
                 case Type.GET:
                     httpType = "GET";
                     break;
                 case Type.HEAD:
-                    httpType ="HEAD";
+                    httpType = "HEAD";
                     break;
                 case Type.POST:
                     httpType = "POST";
                     break;
                 case Type.PUT:
-                    httpType ="PUT";
+                    httpType = "PUT";
                     break;
                 case Type.DELETE:
                     httpType = "DELETE";
@@ -112,8 +119,13 @@ namespace Webserver
                 default:
                     break;
             }
-            //TODO:
-            return header.ToString() + body.ToString();
+            request.Append(httpType + " ");
+            request.Append(url + " ");
+            request.Append("HTTP/" + version + "\r\n");
+            request.Append(header.ToString());
+            request.Append(body + "\r\n\r\n");
+
+            return request.ToString();
         }
         public byte[] GetHeaderAsBytes()
         {
